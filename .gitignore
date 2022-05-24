@@ -1,1 +1,6 @@
 data
+__pycache__
+mlruns
+artifacts
+.DS_Store
+mlflow.db
