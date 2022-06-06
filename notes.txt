@@ -3,6 +3,8 @@ rapidminer
 google TPU
 databricks feature zoo
 
+get star image from 2MASS or simbad (more reliable than mastar)
+
 Approach 1: deploy via MLFlow and test against the other models
 Approach 2: try to reduce MSE via eg:
   * feature engineering: polynomial regression on spectrogram (summarising down to 3 vars)

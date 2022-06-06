@@ -11,6 +11,7 @@ from scipy import interpolate
 import colour
 import colour.plotting as cplt
 import base64
+from astropy.coordinates import SkyCoord
 
 
 class StarLoader:
@@ -91,6 +92,10 @@ class Star:
 
     def get_mangaid(self):
         return self.stardata['MANGAID'].strip()
+
+    def get_coord(self):
+        # You can .to_string('decimal|dms|hmsdms')
+        return SkyCoord(self.stardata['RA'], self.stardata['DEC'], unit='deg')
 
     def get_star_image(self, w=50, h=50, s=0.2):
         # https://skyserver.sdss.org/dr17/SkyServerWS/ImgCutout/getjpeg?TaskName=Skyserver.Explore.Image&ra=48.8733428617884%20&dec=-8.44283369381076&scale=0.2&width=200&height=200&opt=G
