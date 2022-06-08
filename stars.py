@@ -15,7 +15,13 @@ from astropy.coordinates import SkyCoord
 
 
 class StarLoader:
-    def __init__(self, starpath, spectrapath, hdu=1):
+    def __init__(
+        self,
+        starpath='data/mastarall-v3_1_1-v1_7_7.fits',
+        spectrapath='data/mastar-combspec-v3_1_1-v1_7_7-lsfpercent99.5.fits',
+        paramspath='data/mastar-goodstars-v3_1_1-v1_7_7-params-v1.fits',
+        hdu=1,
+    ):
         starsdat = apy.Table.read(starpath, format='fits', hdu=hdu)
         assert len(starsdat) > 10
         spectradat = apy.Table.read(spectrapath, format='fits', hdu=hdu)
@@ -26,6 +32,17 @@ class StarLoader:
             spectradat[['MANGAID', 'WAVE', 'FLUX', 'IVAR', 'MASK']],
             'MANGAID'
         )
+
+        if paramspath != '':
+            paramsdat = apy.Table.read(paramspath, format='fits', hdu=hdu)
+            assert len(paramsdat) > 10
+            stars = apy.join(
+                stars[['MANGAID', 'RA', 'DEC', 'INPUT_TEFF',
+                       'INPUT_SOURCE', 'WAVE', 'FLUX', 'IVAR', 'MASK']],
+                paramsdat[['MANGAID', 'TEFF_MED']],
+                'MANGAID'
+            )
+
         stars['FLUX_CORR'] = stars['FLUX'].copy()
 
         # Interpolate over broken pixels. Good example of test target is 7-17015390
