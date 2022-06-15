@@ -68,6 +68,22 @@ class StarLoader:
 
         self.stars = stars
 
+    def fits_to_pd(self, stars):
+        mangaid = pd.Series(stars['MANGAID'].astype('str')).rename('mangaid')
+        teff = pd.Series(stars['INPUT_TEFF'].astype(float)).rename('teff')
+        teff_ext = pd.Series(
+            stars['TEFF_MED'].astype(float)).rename('teff_ext')
+
+        header = []
+        for c in np.arange(stars['FLUX_CORR'].shape[1]):
+            header.append('flux%d' % c)
+        flux_corr = pd.DataFrame(
+            np.array(stars['FLUX_CORR'].astype(float)), columns=header)
+
+        header.append('teff')
+        header.append('teff_ext')
+        return pd.concat([mangaid, flux_corr, teff, teff_ext], axis=1)
+
     def get_star(self, mangaid):
         starq = self.stars[np.char.startswith(
             self.stars['MANGAID'].data, mangaid.encode('ascii'))]
