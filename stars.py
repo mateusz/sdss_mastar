@@ -68,6 +68,18 @@ class StarLoader:
 
         self.stars = stars
 
+    def get_goodt(self):
+        return self.stars[self.stars['INPUT_TEFF'] > 0]
+
+    def get_badt(self):
+        return self.stars[self.stars['INPUT_TEFF'] <= 0]
+
+    def get_badt_lim(self):
+        goodt = self.get_goodt()['INPUT_TEFF']
+        max_seen = goodt.max()
+        min_seen = goodt.min()
+        return self.stars[(self.stars['INPUT_TEFF'] <= 0) & (self.stars['TEFF_MED'] >= min_seen) & (self.stars['TEFF_MED'] <= max_seen)]
+
     def fits_to_pd(self, stars):
         mangaid = pd.Series(stars['MANGAID'].astype('str')).rename('mangaid')
         teff = pd.Series(stars['INPUT_TEFF'].astype(float)).rename('teff')
@@ -83,6 +95,9 @@ class StarLoader:
         header.append('teff')
         header.append('teff_ext')
         return pd.concat([mangaid, flux_corr, teff, teff_ext], axis=1)
+
+    def get_angstroms(self):
+        return np.array(self.stars[0]['WAVE'].astype(float))
 
     def get_star(self, mangaid):
         starq = self.stars[np.char.startswith(
@@ -122,6 +137,13 @@ class Star:
         spectrum_data = dict(
             zip(self.stardata['WAVE']/10.0, self.stardata['FLUX_CORR']))
         self.spectral_distribution = colour.SpectralDistribution(spectrum_data)
+
+        with colour.utilities.domain_range_scale('1'):
+            self.xyz = colour.sd_to_XYZ(self.spectral_distribution.align(
+                colour.SPECTRAL_SHAPE_DEFAULT))
+            self.rgb = colour.XYZ_to_sRGB(
+                self.xyz / 100, illuminant=colour.CCS_ILLUMINANTS['cie_2_1931']['E'])
+            self.rgb = colour.algebra.normalise_maximum(self.rgb)
 
     def get_mangaid(self):
         return self.stardata['MANGAID'].strip()
@@ -220,22 +242,16 @@ class Star:
 
     def get_simulated_star_image(self, figsize=(1, 1)):
         plotdata = io.BytesIO()
-        with colour.utilities.domain_range_scale('1'):
-            XYZ = colour.sd_to_XYZ(self.spectral_distribution.align(
-                colour.SPECTRAL_SHAPE_DEFAULT))
-            RGB = colour.XYZ_to_sRGB(
-                XYZ / 100, illuminant=colour.CCS_ILLUMINANTS['cie_2_1931']['E'])
+        star = plt.Circle(
+            (0.5, 0.5), 0.15, color=self.rgb)
+        cosmos = plt.Rectangle((0.0, 0.0), 1.0, 1.0, color=[0, 0, 0])
 
-            star = plt.Circle(
-                (0.5, 0.5), 0.15, color=colour.algebra.normalise_maximum(RGB))
-            cosmos = plt.Rectangle((0.0, 0.0), 1.0, 1.0, color=[0, 0, 0])
-
-            _, ax = plt.subplots(figsize=figsize)
-            ax.set_axis_off()
-            ax.add_patch(cosmos)
-            ax.add_patch(star)
-            plt.savefig(plotdata, format='png')
-            plt.close()
+        _, ax = plt.subplots(figsize=figsize)
+        ax.set_axis_off()
+        ax.add_patch(cosmos)
+        ax.add_patch(star)
+        plt.savefig(plotdata, format='png')
+        plt.close()
 
         return plotdata.getvalue()
 
