@@ -1,1 +1,3 @@
 get star image from 2MASS or simbad (more reliable than mastar)
+
+try https://github.com/hyperopt/hyperopt-sklearn

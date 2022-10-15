@@ -92,8 +92,6 @@ class StarLoader:
         flux_corr = pd.DataFrame(
             np.array(stars['FLUX_CORR'].astype(float)), columns=header)
 
-        header.append('teff')
-        header.append('teff_ext')
         return pd.concat([mangaid, flux_corr, teff, teff_ext], axis=1)
 
     def get_angstroms(self):
